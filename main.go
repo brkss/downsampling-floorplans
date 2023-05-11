@@ -53,6 +53,17 @@ func checkForPixelsToBeFilledHorizontal(tmp []string, x int) bool {
 
 }
 
+
+func fillGapsInVerticalWalls(tmp [][]string, x int, y int) bool {
+	
+	for i := y; i < len(tmp) && i < y + 10; i++ {
+		if tmp[i][x] == "1"{
+			return true;
+		}
+	}
+	return false;
+}
+
 func writeImage(tmp [][]string, filename string){
 	
 	upLeft := image.Point{0, 0}
@@ -115,7 +126,9 @@ func main() {
 		}
 		new_map_data = append(new_map_data, tmp);
 	}
+	writeImage(new_map_data, "map-vertical.png");
 
+	/*
 	new_map_data = [][]string{}
 	for i := 0; i < len(mapData); i++ {
 		tmp = []string{}
@@ -128,6 +141,7 @@ func main() {
 		}
 		new_map_data = append(new_map_data, tmp);
 	}
+	*/
 
-	writeImage(new_map_data, img);
+	writeImage(new_map_data, "map-horizontal.png");
 }
