@@ -11,6 +11,24 @@ import (
 	"strings"
 )
 
+func find_down_pixels_down(data [][]string, line int , pos int) (int){
+	for i := line; i < len(data) && i < line + 7; i++ {
+		if(data[i][pos] == "1"){
+			return i;
+		}
+	}
+	return -1;
+}
+
+func find_down_pixels_up(data [][]string, line int , pos int) (int){
+	for i := line; i > 0 && i > line - 7; i-- {
+		if(data[i][pos] == "1"){
+			return i;
+		}
+	}
+	return -1;
+}
+
 func checkLineForEmptyNextPixels(line []string, pos int) bool{
 	for i := pos; i < pos + 20; i++ {
 		if i >= len(line) {
@@ -35,7 +53,6 @@ func checkForPixelsToBeFilledVertical(tmp[][]string, x int, y int) bool {
 		}
 	}
 	return true;
-
 }
 
 func checkForPixelsToBeFilledHorizontal(tmp []string, x int) bool {
@@ -53,15 +70,13 @@ func checkForPixelsToBeFilledHorizontal(tmp []string, x int) bool {
 
 }
 
-
-func fillGapsInVerticalWalls(tmp [][]string, x int, y int) bool {
-	
-	for i := y; i < len(tmp) && i < y + 10; i++ {
-		if tmp[i][x] == "1"{
-			return true;
+func fillGapsInVerticalWalls(tmp [][]string, x int, y int) (bool, int) {
+	for i := y + 2 ; i < len(tmp) && i <= y + 15; i++ {
+		if tmp[i][x] == "1" {
+			return true, i;
 		}
 	}
-	return false;
+	return false, -1;
 }
 
 func writeImage(tmp [][]string, filename string){
@@ -111,8 +126,6 @@ func main() {
 		}
 	}
 
-
-
 	var new_map_data [][]string;
 
 	for i := 0; i < len(mapData); i++ {
@@ -126,7 +139,67 @@ func main() {
 		}
 		new_map_data = append(new_map_data, tmp);
 	}
-	writeImage(new_map_data, "map-vertical.png");
+	writeImage(new_map_data, "map-wavy.png");
+
+
+	// fix waving pixels 
+	for i := 0; i < len(new_map_data); i++{
+		for j := 0; j < len(new_map_data[0]); j++ {
+			if index := find_down_pixels_down(new_map_data, i, j); j > 0 && index != -1 && new_map_data[i][j - 1] == "1"  {
+				new_map_data[index][j] = "0";
+				new_map_data[i][j] = "1";
+			}
+			if index := find_down_pixels_up(new_map_data, i, j); j > 0 && index != -1 && new_map_data[i][j - 1] == "1"  {
+				new_map_data[index][j] = "0";
+				new_map_data[i][j] = "1";
+			}
+		}
+	}
+	writeImage(new_map_data, "map-post-wavy.png");
+
+
+	// init 
+	final_map_data := make([][]string, len(mapData));
+	for i := 0; i < len(new_map_data); i++ {
+		final_map_data[i] = make([]string, len(mapData[0]))
+	}
+
+	// fillup 
+	z := 0;
+	for i := 0; i < len(new_map_data[0]); i++ {
+		for j := 0; j < len(new_map_data); j++ {
+			if z > 0 {
+				final_map_data[j][i] = "1";
+				/*
+				if final_map_data[j][i] != "0" {
+					tmp_index := i + 1;
+					for tmp_index < i + 10 && tmp_index < len(new_map_data[0]) {
+						final_map_data[j][tmp_index] = "0";
+						new_map_data[j][tmp_index] = "0";
+						tmp_index++;
+					}
+				}*/
+				z--;
+			}else if isWritable, yindex:= fillGapsInVerticalWalls(new_map_data, i, j); new_map_data[j][i] == "1" && isWritable {
+				z = 10;
+				// replace added  horizontal line with spaces 
+				if yindex != -1 {
+					tmp_index := i + 1;
+					for new_map_data[yindex][tmp_index] == "1" && tmp_index < len(new_map_data[0]) {
+						final_map_data[yindex][tmp_index] = "0";
+						new_map_data[yindex][tmp_index] = "0";
+						tmp_index++;
+					} 
+				}
+				final_map_data[j][i] = "1";
+			}else if new_map_data[j][i] == "1" {
+				final_map_data[j][i] = "1"
+			}else {
+				final_map_data[j][i] = "0";
+			}
+		}
+		z = 0;
+	} 
 
 	/*
 	new_map_data = [][]string{}
@@ -143,5 +216,5 @@ func main() {
 	}
 	*/
 
-	writeImage(new_map_data, "map-horizontal.png");
+	writeImage(final_map_data, "map-final.png");
 }
